@@ -1,11 +1,11 @@
 package com.niit.dao.impl;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,55 +15,50 @@ import com.niit.model.Product;
 
 @Repository
 @Transactional
-public class ProductDaoImpl implements ProductDao{
+public class ProductDaoImpl implements ProductDao {
+
 
 	@Autowired
-	private SessionFactory sessionFactory;
+    private SessionFactory sessionFactory;
 
-	public List<Product> getAllProducts() {
-		List<Product> allProducts = new ArrayList<Product>();
-		try
-		{
-			Session session = sessionFactory.getCurrentSession();
-			allProducts = session.createQuery("from Product").list();
-			return allProducts;
-		}
-		catch(Exception ex)
-		{
-			ex.printStackTrace();
-			return null;
-		}
-	}
+    @Override
+	public Product getProductById (int id){
+        Session session = sessionFactory.getCurrentSession();
+        Product product = (Product) session.get(Product.class, id);
+        session.flush();
 
-	public Product getProductByID(int productID) {
-		Product product;
-		try
-		{
-			Session session = sessionFactory.getCurrentSession();
-			product = session.get(Product.class, productID);
-			return product;
-		}
-		catch(Exception ex)
-		{
-			ex.printStackTrace();
-			return null;
-		}
-	}
+        return product;
+    }
 
-	public boolean addProduct(Product product) {
-		try
-		{
-			Session session = sessionFactory.getCurrentSession();
-			session.save(product);
-			session.flush();
-			return true;
-		}
-		catch(Exception ex)
-		{
-			ex.printStackTrace();
-			return false;
-		}
+    @Override
+	public List<Product> getProductList(){
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery("from Product");
+        List<Product> productList = query.list();
+        session.flush();
 
-}
+        return productList;
+    }
+
+    @Override
+	public void addProduct (Product product){
+        Session session = sessionFactory.getCurrentSession();
+        session.saveOrUpdate(product);
+        session.flush();
+    }
+
+    @Override
+	public void editProduct (Product product){
+        Session session = sessionFactory.getCurrentSession();
+        session.saveOrUpdate(product);
+        session.flush();
+    }
+
+    @Override
+	public void deleteProduct (Product product){
+        Session session = sessionFactory.getCurrentSession();
+        session.delete(product);
+        session.flush();
+    }
 
 }

@@ -6,8 +6,14 @@ import com.niit.model.Product;
 
 public interface ProductService {
 
-	List<Product> getAllProducts();
-	Product getProductByID(int productID);
-	boolean addProduct(Product product);
-	
+    List<Product> getProductList();
+
+    Product getProductById (int id);
+
+    void addProduct(Product product);
+
+    void editProduct(Product product);
+
+    void deleteProduct(Product product);
+
 }

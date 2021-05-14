@@ -1,59 +1,94 @@
 package com.niit.controller;
 
+
+
+import java.io.IOException;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.niit.model.Product;
 import com.niit.service.ProductService;
 
 @Controller
+@RequestMapping("/product")
 public class ProductController {
 
-	@Autowired
-	private ProductService productService;
-	
-	@GetMapping("/admin/addProduct")
-	public String addProductPage(Model model)
-	{
-		Product product = new Product();
-		model.addAttribute("product", product);
-		return "addProduct";
-	}
-	
-	@PostMapping("/admin/addProduct")
-	public String addProductDB(@ModelAttribute("product") Product product)
-	{
-		boolean result = productService.addProduct(product);
-		if(result)
+    @Autowired
+    private ProductService productService;
+    
+    @Autowired
+	private JavaMailSender mailSender;
+
+    @RequestMapping("/productList/all")
+    public String getProducts(Model model){
+        List<Product> products = productService.getProductList();
+        model.addAttribute("products", products);
+
+        return "productList";
+    }
+
+    @RequestMapping("/viewProduct/{productId}")
+    public String viewProduct(@PathVariable int productId, Model model) throws IOException{
+        Product product = productService.getProductById(productId);
+        model.addAttribute("product", product);
+
+        return "viewProduct";
+    }
+
+    @RequestMapping("/productList")
+    public String getProductByCategory(@RequestParam("searchCondition") String searchCondition, Model model){
+        List<Product> products = productService.getProductList();
+        model.addAttribute("products", products);
+        model.addAttribute("searchCondition", searchCondition);
+
+        return "productList";
+    }
+    @RequestMapping("/favorite/{productId}")
+    public String viewSendMailPage(@PathVariable int productId, Model model) throws IOException{
+    	Product product = productService.getProductById(productId);
+        model.addAttribute("product", product);
+
+        return "sendMail";
+    }
+    @RequestMapping(value="/sendMail", method=RequestMethod.POST)
+    public String sendMail(HttpServletRequest request)
+    {
+    	try
 		{
-			return "index";
+		String recipientAddress = request.getParameter("recipient");
+		String subject = request.getParameter("subject");
+		String message = request.getParameter("message");
+		
+		// prints debug info
+		System.out.println("To: " + recipientAddress);
+		System.out.println("Subject: " + subject);
+		System.out.println("Message: " + message);
+		
+		// creates a simple e-mail object
+		SimpleMailMessage email = new SimpleMailMessage();
+		email.setTo(recipientAddress);
+		email.setSubject(subject);
+		email.setText(message);
+		
+		
+		
 		}
-		else
+		catch(Exception ex)
 		{
-			return "redirect:/admin/addProduct";
+			System.out.println("Exception = "+ex);
 		}
-	}
-	
-	@GetMapping("/user/viewAllProducts")
-	public String viewAllProduct(Model model)
-	{
-		List<Product> allProducts = productService.getAllProducts();
-		model.addAttribute("products", allProducts);
-		return "viewAllProducts";
-	}
-	
-	@GetMapping("/user/viewProduct/{id}")
-	public String viewProduct(@PathVariable("id") int id,  Model model)
-	{
-		Product product = productService.getProductByID(id);
-		model.addAttribute("product", product);
-		return "viewProduct";
-	}
-}
+		return "Success";
+    }
+
+} 
